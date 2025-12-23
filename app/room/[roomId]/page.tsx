@@ -243,7 +243,7 @@ export default function RoomPage() {
                 The Fraternal Order of Eagles • Philippine Eagles 1979
               </p>
               <p className="text-gray-500">
-                Powered by <span className="text-blue-400 font-semibold">Godmisoft</span>
+                Powered by <span className="text-blue-400 font-semibold">Kuya Heber</span>
               </p>
             </div>
           </div>
