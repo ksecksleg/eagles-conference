@@ -294,7 +294,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-400 text-sm mb-3">
-                Professional video conferencing platform for secure and seamless communication.
+                Video conferencing platform for AMA to secure and seamless communication.
               </p>
               <p className="text-xs text-gray-500">
                 Ang Malayang Agila • Humanitarian Service • Deo Et Patria
@@ -328,11 +328,11 @@ export default function Home() {
           {/* Bottom Bar */}
           <div className="border-t border-gray-700/50 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 Philippine Eagles Conference Platform. All rights reserved.
+              © 2025 Philippine Eagles Conference Platform. All rights reserved.
             </p>
             <p className="text-sm">
               <span className="text-gray-400">Developed by</span>
-              <span className="text-blue-400 font-semibold ml-1">Godmisoft</span>
+              <span className="text-blue-400 font-semibold ml-1">Kuya Heber</span>
             </p>
           </div>
         </div>
