@@ -1,14 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
 
 export default function RoomPage() {
   const params = useParams();
@@ -18,223 +12,244 @@ export default function RoomPage() {
   const displayName = searchParams.get('name') || 'Guest';
   const isHost = searchParams.get('host') === 'true';
   
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
-  const jitsiApiRef = useRef<any>(null);
   const [copied, setCopied] = useState(false);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
+  // Jitsi meeting URL (direct, no 5-minute limit)
+  const jitsiMeetingUrl = `https://meet.jit.si/PhilippineEagles${meetingId}#userInfo.displayName="${encodeURIComponent(displayName)}"`;
+  
   const meetingLink = typeof window !== 'undefined' 
     ? `${window.location.origin}/room/${meetingId}` 
     : '';
 
   useEffect(() => {
-    // Load Jitsi Meet External API
-    const script = document.createElement('script');
-    script.src = 'https://meet.jit.si/external_api.js';
-    script.async = true;
-    script.onload = () => setScriptLoaded(true);
-    document.body.appendChild(script);
+    // Countdown before redirect
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // Redirect to Jitsi after countdown
+      window.location.href = jitsiMeetingUrl;
+    }
+  }, [countdown, jitsiMeetingUrl]);
 
-    return () => {
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-      }
-      document.body.removeChild(script);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!scriptLoaded || !jitsiContainerRef.current) return;
-
-    const domain = 'meet.jit.si';
-    const options = {
-      roomName: `PhilippineEagles_${meetingId}`,
-      width: '100%',
-      height: '100%',
-      parentNode: jitsiContainerRef.current,
-      configOverwrite: {
-        startWithAudioMuted: true,
-        startWithVideoMuted: false,
-        enableWelcomePage: false,
-        prejoinPageEnabled: false,
-        disableDeepLinking: true,
-        toolbarButtons: [
-          'camera',
-          'chat',
-          'closedcaptions',
-          'desktop',
-          'download',
-          'embedmeeting',
-          'etherpad',
-          'feedback',
-          'filmstrip',
-          'fullscreen',
-          'hangup',
-          'help',
-          'highlight',
-          'invite',
-          'linktosalesforce',
-          'livestreaming',
-          'microphone',
-          'noisesuppression',
-          'participants-pane',
-          'profile',
-          'raisehand',
-          'recording',
-          'security',
-          'select-background',
-          'settings',
-          'shareaudio',
-          'sharedvideo',
-          'shortcuts',
-          'stats',
-          'tileview',
-          'toggle-camera',
-          'videoquality',
-          'whiteboard',
-        ],
-      },
-      interfaceConfigOverwrite: {
-        SHOW_JITSI_WATERMARK: false,
-        SHOW_WATERMARK_FOR_GUESTS: false,
-        SHOW_BRAND_WATERMARK: false,
-        BRAND_WATERMARK_LINK: '',
-        SHOW_POWERED_BY: false,
-        DEFAULT_BACKGROUND: '#1a1a1a',
-        DEFAULT_LOGO_URL: '/logo.png',
-        MOBILE_APP_PROMO: false,
-        DISPLAY_WELCOME_FOOTER: false,
-      },
-      userInfo: {
-        displayName: displayName,
-      },
-    };
-
-    jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, options);
-
-    // Event listeners
-    jitsiApiRef.current.on('videoConferenceJoined', () => {
-      console.log('Conference joined successfully');
-    });
-
-    jitsiApiRef.current.on('participantLeft', () => {
-      console.log('Participant left');
-    });
-
-    jitsiApiRef.current.on('readyToClose', () => {
-      router.push('/');
-    });
-
-    return () => {
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-      }
-    };
-  }, [scriptLoaded, meetingId, displayName, router]);
-
-  const copyMeetingLink = () => {
-    navigator.clipboard.writeText(meetingLink);
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const copyMeetingId = () => {
-    navigator.clipboard.writeText(meetingId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const joinNow = () => {
+    window.location.href = jitsiMeetingUrl;
   };
 
   return (
-    <div className="h-screen flex flex-col bg-eagles-black">
-      {/* Top Bar */}
-      <div className="bg-black/90 backdrop-blur-sm border-b border-eagles-gold/30 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10">
-            <Image 
-              src="/logo.png" 
-              alt="Philippine Eagles Logo" 
-              fill
-              className="object-contain"
-            />
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-eagles-gold">Philippine Eagles Conference</h1>
-            <p className="text-xs text-gray-400">
-              {isHost ? '👑 Host' : '👤 Participant'} • {displayName}
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 flex items-center justify-center p-4">
+      
+      <div className="max-w-3xl w-full">
         
-        <div className="flex items-center gap-2">
-          <div className="hidden md:block bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-eagles-gold/30">
-            <p className="text-xs text-gray-400 mb-1">Meeting ID</p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-mono text-eagles-gold">{meetingId}</span>
+        {/* Main Card */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
+          
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-8 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="relative w-16 h-16">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white mb-1">
+                    Joining Conference
+                  </h1>
+                  <div className="flex items-center space-x-2 text-sm">
+                    {isHost ? (
+                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        HOST
+                      </span>
+                    ) : (
+                      <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        PARTICIPANT
+                      </span>
+                    )}
+                    <span className="text-gray-300">{displayName}</span>
+                  </div>
+                </div>
+              </div>
               <button
-                onClick={copyMeetingId}
-                className="text-xs bg-eagles-gold/20 hover:bg-eagles-gold/30 text-eagles-gold px-2 py-1 rounded transition-all"
+                onClick={() => router.push('/')}
+                className="text-gray-400 hover:text-white transition-colors"
+                title="Cancel"
               >
-                {copied ? '✓' : '📋'}
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
-          
-          <button
-            onClick={copyMeetingLink}
-            className="bg-eagles-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg transition-all text-sm flex items-center gap-2"
-          >
-            <span className="hidden md:inline">
-              {copied ? '✓ Copied!' : '🔗 Copy Link'}
-            </span>
-            <span className="md:hidden">
-              {copied ? '✓' : '🔗'}
-            </span>
-          </button>
-          
-          <button
-            onClick={() => router.push('/')}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition-all text-sm"
-          >
-            Exit
-          </button>
-        </div>
-      </div>
 
-      {/* Jitsi Meeting Container */}
-      <div className="flex-1 relative">
-        <div ref={jitsiContainerRef} className="absolute inset-0" />
-        {!scriptLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-eagles-black">
-            <div className="text-center">
-              <div className="relative w-24 h-24 mx-auto mb-4">
-                <Image 
-                  src="/logo.png" 
-                  alt="Loading" 
-                  fill
-                  className="object-contain animate-pulse"
-                />
+          {/* Content */}
+          <div className="p-8 md:p-10">
+            
+            {/* Meeting Info */}
+            <div className="space-y-4 mb-8">
+              
+              {/* Meeting ID */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                  Meeting ID
+                </label>
+                <div className="flex items-center space-x-3">
+                  <div className="flex-1 bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/20">
+                    <span className="text-2xl font-mono font-bold text-white tracking-widest">
+                      {meetingId}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(meetingId)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl transition-all transform hover:scale-105 active:scale-95"
+                    title="Copy Meeting ID"
+                  >
+                    {copied ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
-              <p className="text-white text-lg">Loading conference...</p>
-              <p className="text-gray-400 text-sm mt-2">Palihug pag-antus gamay</p>
+
+              {/* Share Link */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                  Share Link
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={meetingLink}
+                    readOnly
+                    className="flex-1 bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(meetingLink)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl transition-all transform hover:scale-105 active:scale-95"
+                    title="Copy Link"
+                  >
+                    {copied ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Countdown Section */}
+            <div className="text-center py-12 mb-8">
+              {countdown > 0 ? (
+                <div className="space-y-6">
+                  <div className="relative inline-block">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                    <div className="relative text-8xl font-bold text-white">
+                      {countdown}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-2xl font-semibold text-white">
+                      Redirecting to meeting room...
+                    </p>
+                    <p className="text-gray-400">
+                      Please wait a moment
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="relative w-20 h-20 mx-auto">
+                    <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-xl text-white font-semibold">
+                    Opening conference room...
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={joinNow}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-5 px-8 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+              >
+                <span className="flex items-center justify-center space-x-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>Join Now</span>
+                </span>
+              </button>
+              
+              <button
+                onClick={() => router.push('/')}
+                className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-5 rounded-xl transition-all border border-white/20"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {/* Info Banner */}
+            <div className="mt-8 bg-gradient-to-r from-blue-600/10 to-purple-600/10 backdrop-blur-sm rounded-xl p-6 border border-blue-500/20">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-blue-200 mb-2">
+                    You will be redirected to Jitsi Meet
+                  </p>
+                  <ul className="text-xs text-gray-400 space-y-1">
+                    <li>• No time limits on meetings</li>
+                    <li>• Support for 100+ participants</li>
+                    <li>• All features included (screen share, recording, chat)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Footer */}
+          <div className="bg-black/30 backdrop-blur-sm px-8 py-4 border-t border-white/10">
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-gray-400">
+                The Fraternal Order of Eagles • Philippine Eagles 1979
+              </p>
+              <p className="text-gray-500">
+                Powered by <span className="text-blue-400 font-semibold">Godmisoft</span>
+              </p>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Mobile Info Bar */}
-      <div className="md:hidden bg-black/90 backdrop-blur-sm border-t border-eagles-gold/30 px-4 py-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-gray-400">Meeting ID</p>
-            <p className="text-sm font-mono text-eagles-gold">{meetingId}</p>
-          </div>
-          <button
-            onClick={copyMeetingId}
-            className="text-xs bg-eagles-gold/20 hover:bg-eagles-gold/30 text-eagles-gold px-3 py-1 rounded transition-all"
-          >
-            {copied ? '✓ Copied' : '📋 Copy'}
-          </button>
         </div>
+
       </div>
     </div>
   );
