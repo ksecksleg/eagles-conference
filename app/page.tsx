@@ -23,13 +23,20 @@ export default function Home() {
     try {
       const newMeetingId = uuidv4().slice(0, 8);
       
-      // Save meeting to Firebase
-      await addDoc(collection(db, 'meetings'), {
-        meetingId: newMeetingId,
-        hostName: displayName,
-        createdAt: serverTimestamp(),
-        status: 'active'
-      });
+      // Save meeting to Firebase if configured
+      if (db) {
+        try {
+          await addDoc(collection(db, 'meetings'), {
+            meetingId: newMeetingId,
+            hostName: displayName,
+            createdAt: serverTimestamp(),
+            status: 'active'
+          });
+        } catch (error) {
+          console.warn('Could not save to Firebase:', error);
+          // Continue anyway - meeting still works without Firebase
+        }
+      }
 
       // Redirect to meeting room
       router.push(`/room/${newMeetingId}?name=${encodeURIComponent(displayName)}&host=true`);
