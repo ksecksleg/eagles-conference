@@ -1,0 +1,46 @@
+{
+  "name": "Philippine Eagles Conference",
+  "short_name": "Eagles Conf",
+  "description": "Secure video conferencing platform for The Fraternal Order of Eagles - Philippine Eagles 1979",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "social", "communication"],
+  "shortcuts": [
+    {
+      "name": "Create Meeting",
+      "short_name": "Create",
+      "description": "Start a new video conference",
+      "url": "/?action=create",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
