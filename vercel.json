@@ -3,6 +3,16 @@
   "devCommand": "next dev",
   "installCommand": "npm install",
   "framework": "nextjs",
+  "functions": {
+    "app/**/*.tsx": {
+      "maxDuration": 10
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_VERSION": "18.17.0"
+    }
+  },
   "rewrites": [
     {
       "source": "/sw.js",
