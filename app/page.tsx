@@ -112,7 +112,7 @@ export default function Home() {
             Connect Seamlessly
           </h2>
           <p className="text-xl md:text-2xl text-gray-300 mb-3 font-light">
-            KSEC/KSLEG - Ang Malayang AGila Video Conferencing Platform
+            KSEC/KSLEG - Ang Malayang Agila Video Conferencing Platform
           </p>
           <div className="flex items-center justify-center space-x-2 text-sm text-gray-400">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
